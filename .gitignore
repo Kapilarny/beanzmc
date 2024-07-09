@@ -1,0 +1,2 @@
+cmake-build-debug/
+external/includes/ # boost is huge, so I'm not including it in the repo
