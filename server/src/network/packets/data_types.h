@@ -5,7 +5,7 @@
 #ifndef DATA_TYPES_H
 #define DATA_TYPES_H
 
-#include <boost/endian/endian.hpp>
+#include <boost/endian/arithmetic.hpp>
 
 #include "defines.h"
 
@@ -14,37 +14,37 @@
 
 using namespace boost::endian;
 
-namespace Conn
+namespace conn
 {
     // Data types
-    typedef i32 VarInt;
-    typedef i64 VarLong;
+    typedef i32 var_int;
+    typedef i64 var_long;
 
-    typedef struct String {
-        VarInt length;
+    typedef struct string {
+        var_int length;
         char* data;
     } String;
 
-    typedef String Chat;
-    typedef String Identifier;
+    typedef String chat;
+    typedef String identifier;
 
-    typedef struct Position {
+    typedef struct position {
         big_int32_t x;
         big_int32_t y;
         big_int32_t z;
     } Position;
 
-    typedef big_int8_t Angle;
+    typedef big_int8_t angle;
 
-    typedef struct UUID {
+    typedef struct uuid {
         big_int64_t most;
         big_int64_t least;
     } UUID;
 
     // Packets
-    typedef struct Packet {
-        VarInt length;
-        VarInt packetID;
+    typedef struct packet {
+        var_int length;
+        var_int packetID;
         u8* data;
     } Packet;
 
