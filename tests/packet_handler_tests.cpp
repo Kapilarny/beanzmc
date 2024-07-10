@@ -8,28 +8,21 @@
 #include "network/packets/data_types.h"
 #include "network/packets/packet_handler.h"
 
-TEST(packet_handler_tests, VarInt_ReadWrite) {
-    std::vector<u8> sample_var_int = {0xff, 0xff, 0xff, 0xff, 0x07};
-    u32 offset = 0;
-    conn::var_int var_int = read_data<conn::var_int>(sample_var_int.data(), offset);
-    EXPECT_EQ(var_int, 2147483647);
+TEST(packet_handler_tests, read_packet_sample) {
+    struct TestPacket {
+        conn::var_int test_var_int;
+        i8 test_byte;
+        i32 test_int;
+        conn::var_long test_var_long;
+    };
 
-    std::vector<u8> write_sample_var_int(5);
-    offset = 0;
-    write_data<conn::var_int>(write_sample_var_int.data(), offset, var_int);
+    std::vector<u8> test_packet_data = {0xff, 0xff, 0x7f, 0x07, 0x01, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f};
+    conn::packet p{.data = test_packet_data.data()};
 
-    EXPECT_EQ(write_sample_var_int, sample_var_int);
-}
+    auto test_packet = read_packet<TestPacket>(p);
 
-TEST(packet_handler_tests, VarLong_ReadWrite) {
-    std::vector<u8> sample_var_long = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f };
-    u32 offset = 0;
-    conn::var_long var_long = read_data<conn::var_long>(sample_var_long.data(), offset);
-    EXPECT_EQ(var_long, 9223372036854775807);
-
-    std::vector<u8> write_sample_var_long(9);
-    offset = 0;
-    write_data<conn::var_long>(write_sample_var_long.data(), offset, var_long);
-
-    EXPECT_EQ(write_sample_var_long, sample_var_long);
+    EXPECT_EQ(test_packet.test_var_int.val, 2097151);
+    EXPECT_EQ(test_packet.test_byte, 7);
+    EXPECT_EQ(test_packet.test_int, 0);
+    EXPECT_EQ(test_packet.test_var_long.val, 9223372036854775807);
 }

@@ -1,13 +1,14 @@
 cmake_minimum_required(VERSION 3.28)
 project(beanzmc_server)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
 enable_testing()
 
 add_subdirectory(server)
 add_subdirectory(tests)
 
-add_executable(beanzmc_server src/main.cpp)
+add_executable(beanzmc_server src/main.cpp
+        external/includes/boost/reflect.hpp)
 target_include_directories(beanzmc_server PRIVATE external/includes src server/src)
 target_link_libraries(beanzmc_server PRIVATE beanzmc)

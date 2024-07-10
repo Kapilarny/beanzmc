@@ -17,8 +17,8 @@ using namespace boost::endian;
 namespace conn
 {
     // Data types
-    typedef i32 var_int;
-    typedef i64 var_long;
+    struct __attribute__((__packed__)) var_int { i32 val{}; };
+    struct __attribute__((__packed__)) var_long { i64 val{}; };
 
     typedef struct string {
         var_int length;
@@ -45,7 +45,7 @@ namespace conn
     typedef struct packet {
         var_int length;
         var_int packetID;
-        u8* data;
+        u8* data{};
     } Packet;
 
     typedef enum StatusPacketType {
