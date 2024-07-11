@@ -11,6 +11,8 @@
 #include <boost/shared_ptr.hpp>
 
 #include "defines.h"
+#include "packets/data_types.h"
+#include "packets/packet_dispatcher.h"
 
 using boost::asio::ip::tcp;
 
@@ -22,10 +24,11 @@ public:
         return pointer(new tcp_connection(io_context));
     }
 
-    tcp::socket& socket() {
-        return socket_;
-    }
+    tcp::socket &socket() { return socket_; }
 
+    void write_packet(const conn::packet& packet);
+
+    i32 read_varint_from_socket();
     void start();
 private:
     tcp_connection(boost::asio::io_context& io_context) : socket_(io_context) {}
@@ -33,7 +36,7 @@ private:
     void handle_write(const boost::system::error_code& error, size_t bytes_transferred) {}
 
     tcp::socket socket_;
-    std::string message_;
+    packet_dispatcher dispatcher = packet_dispatcher(*this);
 };
 
 class tcp_server {

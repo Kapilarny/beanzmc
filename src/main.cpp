@@ -8,16 +8,11 @@
 #include <vector>
 
 #include "defines.h"
+#include "network/packets/client/client_status_packets.h"
 #include "network/packets/data_types.h"
-#include "network/packets/packet_handler.h"
+#include "network/packets/packet_serializer.h"
 #include "network/server.h"
 
-struct TestPacket {
-    conn::var_int test_var_int;
-    i8 test_byte;
-    i32 test_int;
-    conn::var_long test_var_long;
-};
 
 int main() {
     try {

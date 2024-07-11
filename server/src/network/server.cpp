@@ -4,13 +4,75 @@
 
 #include "server.h"
 
-void tcp_connection::start() {
-    message_ = "what up bro";
+#include <iostream>
 
-    boost::asio::async_write(socket_, boost::asio::buffer(message_),
-                             boost::bind(&tcp_connection::handle_write, shared_from_this(),
-                                         boost::asio::placeholders::error,
-                                         boost::asio::placeholders::bytes_transferred));
+#include "packets/data_types.h"
+#include "packets/packet_serializer.h"
+
+void tcp_connection::start() {
+    // Read data
+    while (true) {
+        try {
+            conn::packet p{};
+
+            // Read packet length
+            p.length.val = read_varint_from_socket();
+
+            std::cout << "Received length: " << p.length.val << "\n";
+
+            // Read packet ID
+            p.packetID.val = read_varint_from_socket();
+
+            std::cout << "Received packet ID: " << p.packetID.val << "\n";
+
+            if (p.length.val > 0) {
+                // Read packet data
+                p.data = new u8[p.length.val];
+                boost::asio::read(socket_, boost::asio::buffer(p.data, p.length.val));
+            }
+
+            dispatcher.dispatch_packet(p);
+        } catch (boost::system::system_error &e) {
+            std::cout << e.what() << std::endl;
+            break;
+        }
+    }
+}
+
+void tcp_connection::write_packet(const conn::packet &packet) {
+    // Write packet length
+    std::vector<u8> length = var_int_gen_arr(packet.length.val);
+    boost::asio::write(socket_, boost::asio::buffer(length));
+
+    // Write packet ID
+    std::vector<u8> packet_id = var_int_gen_arr(packet.packetID.val);
+    boost::asio::write(socket_, boost::asio::buffer(packet_id));
+
+    // Write packet data
+    if (packet.length.val > 0) {
+        boost::asio::write(socket_, boost::asio::buffer(packet.data, packet.length.val));
+    }
+}
+
+i32 tcp_connection::read_varint_from_socket() {
+    i32 value = 0;
+    i32 shift = 0;
+
+    while (true) {
+        u8 byte;
+        if(!boost::asio::read(socket_, boost::asio::buffer((void*)&byte, 1))) {
+            throw std::runtime_error("Failed to read packet length");
+        }
+
+        value |= (byte & SEGMENT_BITS) << shift;
+
+        if((byte & CONTINUE_BIT) == 0) break;
+        shift += 7;
+
+        if(shift >= 32) throw std::runtime_error("VarInt is too big");
+    }
+
+    return value;
 }
 
 void tcp_server::start_accept() {

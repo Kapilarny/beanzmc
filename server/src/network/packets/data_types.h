@@ -14,6 +14,8 @@
 
 using namespace boost::endian;
 
+#include <iostream>
+
 namespace conn
 {
     // Data types
@@ -62,10 +64,12 @@ namespace conn
     } PlayPacketType;
 
     // Enums
-    typedef enum HandshakeEnum {
+    enum class ConnectionState {
+        HANDSHAKE = 0,
         STATUS = 1,
-        LOGIN = 2
-    } HandshakeEnum;
+        LOGIN = 2,
+        PLAY = 3
+    };
 } // namespace Conn
 
 #endif //DATA_TYPES_H

@@ -7,7 +7,7 @@
 #include "defines.h"
 #include "network/packets/client/client_status_packets.h"
 #include "network/packets/data_types.h"
-#include "network/packets/packet_handler.h"
+#include "network/packets/packet_serializer.h"
 
 TEST(packet_handler_tests, read_packet_sample) {
     struct TestPacket {
@@ -42,28 +42,6 @@ TEST(packet_handler_tests, write_packet_sample) {
     EXPECT_EQ(p.length.val, test_packet_data.size());
     EXPECT_EQ(p.packetID.val, 69);
     EXPECT_EQ(memcmp(p.data, test_packet_data.data(), test_packet_data.size()), 0);
-}
-
-TEST(packet_handler_tests, generate_varint) {
-    std::vector<u8> one = var_int_generate(9);
-    std::vector<u8> two = var_int_generate(2);
-    std::vector<u8> sample = var_int_generate(25565);
-
-    // Print hex
-    for (auto i : one) {
-        std::cout << std::hex << (int)i << " ";
-    }
-    std::cout << "\n";
-
-    for (auto i : two) {
-        std::cout << std::hex << (int)i << " ";
-    }
-    std::cout << "\n";
-
-    for (auto i : sample) {
-        std::cout << std::hex << (int)i << " ";
-    }
-    std::cout << "\n";
 }
 
 TEST(packet_handler_tests, read_handshake_packet) {

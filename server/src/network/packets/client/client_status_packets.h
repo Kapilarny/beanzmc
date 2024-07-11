@@ -13,4 +13,9 @@ struct HandshakePacket {
     conn::var_int next_state;
 };
 
+struct RequestPacket {}; // No fields
+struct PingPacket {
+    i64 payload{};
+};
+
 #endif //CLIENT_STATUS_PACKETS_H
