@@ -17,22 +17,22 @@ using namespace boost::endian;
 namespace conn
 {
     // Data types
-    struct __attribute__((__packed__)) var_int { i32 val{}; };
-    struct __attribute__((__packed__)) var_long { i64 val{}; };
+    struct var_int { i32 val{}; };
+    struct var_long { i64 val{}; };
 
     typedef struct string {
         var_int length;
         char* data;
-    } String;
+    } string;
 
-    typedef String chat;
-    typedef String identifier;
+    typedef string chat;
+    typedef string identifier;
 
     typedef struct position {
         big_int32_t x;
         big_int32_t y;
         big_int32_t z;
-    } Position;
+    } position;
 
     typedef big_int8_t angle;
 
@@ -46,7 +46,7 @@ namespace conn
         var_int length;
         var_int packetID;
         u8* data{};
-    } Packet;
+    } packet;
 
     typedef enum StatusPacketType {
         HANDSHAKE = 0x00
