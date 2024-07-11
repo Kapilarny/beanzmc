@@ -10,9 +10,11 @@
 #include "packets/packet_serializer.h"
 
 void tcp_connection::start() {
-    // Read data
-    while (true) {
-        try {
+    std::cout << "New connection created!\n";
+
+    try {
+        // Read data
+        while (socket_.is_open() && socket_.available() != 0) {
             conn::packet p{};
 
             // Read packet length
@@ -20,26 +22,29 @@ void tcp_connection::start() {
 
             std::cout << "Received length: " << p.length.val << "\n";
 
-            // Read packet ID
-            p.packetID.val = read_varint_from_socket();
-
-            std::cout << "Received packet ID: " << p.packetID.val << "\n";
-
             if (p.length.val > 0) {
+                // Read packet ID
+                p.packetID.val = read_varint_from_socket();
+
+                std::cout << "Received packet ID: " << p.packetID.val << "\n";
+
                 // Read packet data
                 p.data = new u8[p.length.val];
                 boost::asio::read(socket_, boost::asio::buffer(p.data, p.length.val));
             }
 
             dispatcher.dispatch_packet(p);
-        } catch (boost::system::system_error &e) {
-            std::cout << e.what() << std::endl;
-            break;
+
+            delete[] p.data;
         }
+    } catch (boost::system::system_error &e) {
+        std::cout << e.what() << std::endl;
     }
+
+    std::cout << "Connection TERMINATED!\n";
 }
 
-void tcp_connection::write_packet(const conn::packet &packet) {
+void tcp_connection::write_packet(conn::packet packet) {
     // Write packet length
     std::vector<u8> length = var_int_gen_arr(packet.length.val);
     boost::asio::write(socket_, boost::asio::buffer(length));

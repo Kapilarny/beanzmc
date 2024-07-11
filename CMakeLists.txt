@@ -8,7 +8,6 @@ enable_testing()
 add_subdirectory(server)
 add_subdirectory(tests)
 
-add_executable(beanzmc_server src/main.cpp
-        external/includes/boost/reflect.hpp)
+add_executable(beanzmc_server src/main.cpp)
 target_include_directories(beanzmc_server PRIVATE external/includes src server/src)
 target_link_libraries(beanzmc_server PRIVATE beanzmc)

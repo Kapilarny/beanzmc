@@ -15,5 +15,9 @@ add_library(beanzmc
         src/network/packets/server/server_status_packets.h
         src/network/packets/packet_serializer.cpp
 )
+
+# -Wshift-count-overflow
+target_compile_options(beanzmc PRIVATE -Wno-shift-count-overflow)
+
 target_include_directories(beanzmc PRIVATE ../external/includes src)
 target_link_libraries(beanzmc PRIVATE wsock32 ws2_32)

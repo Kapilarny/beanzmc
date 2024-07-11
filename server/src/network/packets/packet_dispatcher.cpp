@@ -21,6 +21,9 @@ void packet_dispatcher::dispatch_packet(const conn::packet &packet) {
         case conn::ConnectionState::HANDSHAKE:
             handle_handshake(packet);
             break;
+        case conn::ConnectionState::STATUS:
+            handle_status(packet);
+            break;
         default:
             std::cout << "Unknown connection state" << std::endl;
             break;
@@ -28,7 +31,7 @@ void packet_dispatcher::dispatch_packet(const conn::packet &packet) {
 }
 
 void packet_dispatcher::handle_handshake(const conn::packet &packet) {
-    if(packet.packetID.val != conn::StatusPacketType::HANDSHAKE) {
+    if (packet.packetID.val != conn::StatusPacketType::HANDSHAKE) {
         std::cout << "Invalid packet ID" << std::endl;
         return;
     }
@@ -40,44 +43,42 @@ void packet_dispatcher::handle_handshake(const conn::packet &packet) {
 
     std::cout << "Switching to state -> " << handshake_packet.next_state.val << std::endl;
     state = (conn::ConnectionState) handshake_packet.next_state.val;
+}
 
-    if(state == conn::ConnectionState::STATUS) {
-        // Wait for a ping
-        connection.read_varint_from_socket();
+void packet_dispatcher::handle_status(const conn::packet &packet) {
+    switch (packet.packetID.val) {
+        case 0x00: {
+            std::cout << "Received status request packet\n";
 
-        // Send status response packet
-        StatusResponsePacket response_packet{};
-        std::string json_data = R"(
-        {
-            "version": {
-                "name": "1.16.5",
-                "protocol": 754
-            },
-            "players": {
-                "max": 100,
-                "online": 5,
-                "sample": [
-                    {
-                        "name": "thinkofdeath",
-                        "id": "4566e69f-c907-48ee-8d71-d7ba5aa00d20"
-                    }
-                ]
-            },
-            "description": {
-                "text": "Hello, world!"
-            }
-        }
-        )";
+            // Send status response packet
+            StatusResponsePacket response_packet{};
+            std::string json_data = "{\n"
+                                    "  \"version\": {\n"
+                                    "    \"name\": \"1.16.5\",\n"
+                                    "    \"protocol\": 754\n"
+                                    "  },\n"
+                                    "  \"players\": {\n"
+                                    "    \"max\": 100,\n"
+                                    "    \"online\": 50\n"
+                                    "  },\n"
+                                    "  \"description\": {\n"
+                                    "    \"text\": \"Hello, world!\"\n"
+                                    "  }\n"
+                                    "}";
 
-        // Set JSON data
-        response_packet.json_response = string_gen(json_data);
+            // Set JSON data
+            response_packet.json_response = string_gen(json_data);
 
-        // Serialize packet
-        conn::packet p = write_packet_data(response_packet, 0x00);
+            // Serialize packet
+            conn::packet p = write_packet_data(response_packet, 0x00);
 
-        // Send packet
-        connection.write_packet(p);
+            // Send packet
+            connection.write_packet(p);
 
-        std::cout << "Written JSON response!\n";
+            std::cout << "Written JSON response!\n";
+        } break;
+        default:
+            std::cout << "Unknown packet ID" << std::endl;
+            break;
     }
 }

@@ -11,4 +11,8 @@ struct StatusResponsePacket {
     conn::string json_response;
 };
 
+struct StatusPongResponsePacket {
+    i64 payload{};
+};
+
 #endif //SERVER_STATUS_PACKETS_H

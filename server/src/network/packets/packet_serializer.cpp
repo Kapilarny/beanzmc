@@ -5,10 +5,10 @@
 #include "packet_serializer.h"
 
 std::vector<u8> var_int_gen_arr(i32 val) {
-    std::vector<u8> result;
+    std::vector<u8> result{};
 
-    while(true) {
-        if((val & ~SEGMENT_BITS) == 0) {
+    while (true) {
+        if ((val & ~SEGMENT_BITS) == 0) {
             result.push_back(val);
             return result;
         }
@@ -16,8 +16,6 @@ std::vector<u8> var_int_gen_arr(i32 val) {
         result.push_back((val & SEGMENT_BITS) | CONTINUE_BIT);
         val = (val >> 7) & ~(1 << 31);
     }
-
-    return result;
 }
 
 conn::string string_gen(const std::string &str) {
@@ -25,7 +23,7 @@ conn::string string_gen(const std::string &str) {
     result.length.val = str.length();
     result.data = new char[str.length()];
 
-    memcpy(result.data, str.c_str(), str.length());
+    memcpy(result.data, str.data(), str.length());
 
     return result;
 }

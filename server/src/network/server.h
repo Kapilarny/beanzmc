@@ -26,7 +26,7 @@ public:
 
     tcp::socket &socket() { return socket_; }
 
-    void write_packet(const conn::packet& packet);
+    void write_packet(conn::packet packet);
 
     i32 read_varint_from_socket();
     void start();

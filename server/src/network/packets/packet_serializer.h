@@ -8,7 +8,7 @@
 #include <stdexcept>
 #include <vector>
 
-#include "boost/reflect.hpp"
+#include <reflect>
 
 #include "data_types.h"
 #include "defines.h"
@@ -17,13 +17,13 @@ conn::string string_gen(const std::string& str);
 std::vector<u8> var_int_gen_arr(i32 val);
 
 template<typename T>
-inline void write_data_typed(u8* data, u32& offset, T value) {
+inline void write_data_typed(u8* data, u32& offset, T& value) {
     memcpy(data + offset, &value, sizeof(T));
     offset += sizeof(T);
 }
 
 template<>
-inline void write_data_typed(u8* data, u32& offset, conn::var_int value) {
+inline void write_data_typed(u8* data, u32& offset, conn::var_int& value) {
     while(true) {
         if((value.val & ~SEGMENT_BITS) == 0) {
             data[offset++] = value.val;
@@ -36,7 +36,7 @@ inline void write_data_typed(u8* data, u32& offset, conn::var_int value) {
 }
 
 template<>
-inline void write_data_typed(u8* data, u32& offset, conn::var_long value) {
+inline void write_data_typed(u8* data, u32& offset, conn::var_long& value) {
     while(true) {
         if((value.val & ~((i64)SEGMENT_BITS)) == 0) {
             data[offset++] = value.val;
@@ -49,7 +49,7 @@ inline void write_data_typed(u8* data, u32& offset, conn::var_long value) {
 }
 
 template<>
-inline void write_data_typed(u8* data, u32& offset, conn::string value) {
+inline void write_data_typed(u8* data, u32& offset, conn::string& value) {
     write_data_typed(data, offset, value.length);
     memcpy(data + offset, value.data, value.length.val);
     offset += value.length.val;
@@ -57,7 +57,13 @@ inline void write_data_typed(u8* data, u32& offset, conn::string value) {
 
 template<typename T>
 inline void read_data_typed(const u8* data, u32& offset, u8* write_to, T type) {
-    memcpy(write_to, data + offset, sizeof(T));
+    // memcpy(write_to, data + offset, sizeof(T));
+
+    // Swap endianness
+    for (u32 i = 0; i < sizeof(T); i++) {
+        write_to[i] = data[offset + sizeof(T) - i - 1];
+    }
+
     offset += sizeof(T);
 }
 
@@ -132,7 +138,7 @@ inline T read_packet_data(conn::packet packet) {
 }
 
 template<typename T>
-inline conn::packet write_packet_data(T packet, i32 packetID) {
+inline conn::packet write_packet_data(const T& packet, i32 packetID) {
     conn::packet result{};
     result.packetID.val = packetID;
 
