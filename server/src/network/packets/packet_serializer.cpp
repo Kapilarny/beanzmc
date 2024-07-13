@@ -14,16 +14,16 @@ std::vector<u8> var_int_gen_arr(i32 val) {
         }
 
         result.push_back((val & SEGMENT_BITS) | CONTINUE_BIT);
-        val = (val >> 7) & ~(1 << 31);
+        val = ((u32)val) >> 7;
     }
 }
 
-conn::string string_gen(const std::string &str) {
+conn::string string_gen(std::string str) {
     conn::string result{};
     result.length.val = str.length();
     result.data = new char[str.length()];
 
-    memcpy(result.data, str.data(), str.length());
+    memcpy(result.data, str.c_str(), str.length());
 
     return result;
 }

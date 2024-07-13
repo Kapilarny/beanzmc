@@ -13,17 +13,23 @@
 #include "data_types.h"
 #include "defines.h"
 
-conn::string string_gen(const std::string& str);
+conn::string string_gen(std::string str);
 std::vector<u8> var_int_gen_arr(i32 val);
 
 template<typename T>
-inline void write_data_typed(u8* data, u32& offset, T& value) {
-    memcpy(data + offset, &value, sizeof(T));
+inline void write_data_typed(u8* data, u32& offset, T value) {
+    // memcpy(data + offset, &value, sizeof(T));
+
+    // Swap endianness
+    for (u32 i = 0; i < sizeof(T); i++) {
+        data[offset + sizeof(T) - i - 1] = *((u8*)&value + i);
+    }
+
     offset += sizeof(T);
 }
 
 template<>
-inline void write_data_typed(u8* data, u32& offset, conn::var_int& value) {
+inline void write_data_typed(u8* data, u32& offset, conn::var_int value) {
     while(true) {
         if((value.val & ~SEGMENT_BITS) == 0) {
             data[offset++] = value.val;
@@ -31,12 +37,12 @@ inline void write_data_typed(u8* data, u32& offset, conn::var_int& value) {
         }
 
         data[offset++] = (value.val & SEGMENT_BITS) | CONTINUE_BIT;
-        value.val = (value.val >> 7) & ~(1 << 31);
+        value.val = ((u32)value.val) >> 7;
     }
 }
 
 template<>
-inline void write_data_typed(u8* data, u32& offset, conn::var_long& value) {
+inline void write_data_typed(u8* data, u32& offset, conn::var_long value) {
     while(true) {
         if((value.val & ~((i64)SEGMENT_BITS)) == 0) {
             data[offset++] = value.val;
@@ -44,12 +50,12 @@ inline void write_data_typed(u8* data, u32& offset, conn::var_long& value) {
         }
 
         data[offset++] = (value.val & SEGMENT_BITS) | CONTINUE_BIT;
-        value.val = (value.val >> 7) & ~(1 << 63);
+        value.val = ((u64)value.val) >> 7;
     }
 }
 
 template<>
-inline void write_data_typed(u8* data, u32& offset, conn::string& value) {
+inline void write_data_typed(u8* data, u32& offset, conn::string value) {
     write_data_typed(data, offset, value.length);
     memcpy(data + offset, value.data, value.length.val);
     offset += value.length.val;
@@ -138,18 +144,53 @@ inline T read_packet_data(conn::packet packet) {
 }
 
 template<typename T>
-inline conn::packet write_packet_data(const T& packet, i32 packetID) {
+u64 get_field_size(T& field) {
+    return sizeof(T);
+}
+
+template<>
+inline u64 get_field_size(conn::string& field) {
+    return field.length.val + sizeof(conn::var_int);
+}
+
+template<typename T>
+inline u64 get_packet_size(T& packet) {
+    u64 size = 0;
+    reflect::for_each([&](auto I) {
+        size += get_field_size(reflect::get<I>(packet));
+    }, packet);
+
+    return size;
+}
+
+inline u8 get_varint_size(i32 val) {
+    u8 size = 0;
+
+    while (true) {
+        if ((val & ~SEGMENT_BITS) == 0) {
+            size++;
+            return size;
+        }
+
+        size++;
+        val = ((u32)val) >> 7;
+    }
+}
+
+template<typename T>
+inline conn::packet write_packet_data(T packet, i32 packetID) {
     conn::packet result{};
     result.packetID.val = packetID;
 
-    result.data = new u8[sizeof(T)]; // TODO: Make sure this memory is freed
+    // i am literally such a clueless dumbass
+    result.data = new u8[get_packet_size(packet)]; // TODO: Make sure this memory is freed
 
     u32 offset = 0;
     reflect::for_each([&](auto I) {
         write_data_typed(result.data, offset, reflect::get<I>(packet));
     }, packet);
 
-    result.length.val = (i32) offset;
+    result.length.val = (i32) offset + get_varint_size(result.packetID.val);
 
     return result;
 }

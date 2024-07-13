@@ -31,6 +31,8 @@ void packet_dispatcher::dispatch_packet(const conn::packet &packet) {
 }
 
 void packet_dispatcher::handle_handshake(const conn::packet &packet) {
+    std::cout << "Handling handshake packet" << std::endl;
+
     if (packet.packetID.val != conn::StatusPacketType::HANDSHAKE) {
         std::cout << "Invalid packet ID" << std::endl;
         return;
@@ -46,25 +48,15 @@ void packet_dispatcher::handle_handshake(const conn::packet &packet) {
 }
 
 void packet_dispatcher::handle_status(const conn::packet &packet) {
+    std::cout << "Handling status packet" << std::endl;
+
     switch (packet.packetID.val) {
         case 0x00: {
             std::cout << "Received status request packet\n";
 
             // Send status response packet
             StatusResponsePacket response_packet{};
-            std::string json_data = "{\n"
-                                    "  \"version\": {\n"
-                                    "    \"name\": \"1.16.5\",\n"
-                                    "    \"protocol\": 754\n"
-                                    "  },\n"
-                                    "  \"players\": {\n"
-                                    "    \"max\": 100,\n"
-                                    "    \"online\": 50\n"
-                                    "  },\n"
-                                    "  \"description\": {\n"
-                                    "    \"text\": \"Hello, world!\"\n"
-                                    "  }\n"
-                                    "}";
+            std::string json_data = "{\"version\": {\"name\": \"1.16.5\", \"protocol\": 754}, \"players\": {\"max\": 100, \"online\": 50}, \"description\": {\"text\": \"beanz\"}}";
 
             // Set JSON data
             response_packet.json_response = string_gen(json_data);
@@ -76,6 +68,23 @@ void packet_dispatcher::handle_status(const conn::packet &packet) {
             connection.write_packet(p);
 
             std::cout << "Written JSON response!\n";
+        } break;
+        case 0x01: {
+            std::cout << "Received ping packet\n";
+
+            // Deserialize packet
+            auto ping_packet = read_packet_data<PingPacket>(packet);
+
+            // Send pong packet
+            StatusPongResponsePacket pong_packet{ ping_packet.payload };
+
+            // Serialize packet
+            conn::packet p = write_packet_data(pong_packet, 0x01);
+
+            // Send packet
+            connection.write_packet(p);
+
+            std::cout << "Written pong packet!\n";
         } break;
         default:
             std::cout << "Unknown packet ID" << std::endl;

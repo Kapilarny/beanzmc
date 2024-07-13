@@ -30,7 +30,7 @@ void tcp_connection::start() {
 
                 // Read packet data
                 p.data = new u8[p.length.val];
-                boost::asio::read(socket_, boost::asio::buffer(p.data, p.length.val));
+                boost::asio::read(socket_, boost::asio::buffer(p.data, p.length.val - get_varint_size(p.packetID.val))); // TODO: make it more efficient
             }
 
             dispatcher.dispatch_packet(p);
@@ -55,8 +55,25 @@ void tcp_connection::write_packet(conn::packet packet) {
 
     // Write packet data
     if (packet.length.val > 0) {
-        boost::asio::write(socket_, boost::asio::buffer(packet.data, packet.length.val));
+        boost::asio::write(socket_, boost::asio::buffer(packet.data, packet.length.val - packet_id.size()));
     }
+
+    // Print packet data
+    std::cout << "PACKET DISPATCHED! (" << packet.length.val << ", " << packet.packetID.val << ")\n\n";
+
+    for(int i = 0; i < length.size(); i++) {
+        std::cout << std::hex << (int)length[i] << " ";
+    }
+
+    for(int i = 0; i < packet_id.size(); i++) {
+        std::cout << std::hex << (int)packet_id[i] << " ";
+    }
+
+    for(int i = 0; i < packet.length.val - packet_id.size(); i++) {
+        std::cout << std::hex << (int)packet.data[i] << " ";
+    }
+
+    std::cout << "\n\n\n";
 }
 
 i32 tcp_connection::read_varint_from_socket() {
