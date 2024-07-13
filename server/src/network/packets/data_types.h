@@ -24,8 +24,16 @@ namespace conn
 
     typedef struct string {
         var_int length;
-        char* data;
+        char* data{};
     } string;
+
+    inline void print_string(const string& str) {
+        for(int i = 0; i < str.length.val; i++) {
+            std::cout << str.data[i];
+        }
+
+        std::cout << std::endl;
+    }
 
     typedef string chat;
     typedef string identifier;
@@ -49,19 +57,6 @@ namespace conn
         var_int packetID;
         u8* data{};
     } packet;
-
-    typedef enum StatusPacketType {
-        HANDSHAKE = 0x00
-    } StatusPacketType;
-
-    typedef enum LoginPacketType {
-        LOGIN_START = 0x00,
-        LOGIN_SUCCESS = 0x02
-    } LoginPacketType;
-
-    typedef enum PlayPacketType {
-        SPAWN_ENTITY = 0x00
-    } PlayPacketType;
 
     // Enums
     enum class ConnectionState {

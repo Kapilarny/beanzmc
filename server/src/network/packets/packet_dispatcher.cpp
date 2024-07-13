@@ -6,9 +6,11 @@
 
 #include <iostream>
 
+#include "client/client_login_packets.h"
 #include "client/client_status_packets.h"
 #include "network/server.h"
 #include "packet_serializer.h"
+#include "server/server_login_packets.h"
 #include "server/server_status_packets.h"
 
 packet_dispatcher::packet_dispatcher(tcp_connection &connection) : connection(connection) {}
@@ -24,6 +26,9 @@ void packet_dispatcher::dispatch_packet(const conn::packet &packet) {
         case conn::ConnectionState::STATUS:
             handle_status(packet);
             break;
+        case conn::ConnectionState::LOGIN:
+            handle_login(packet);
+            break;
         default:
             std::cout << "Unknown connection state" << std::endl;
             break;
@@ -33,7 +38,7 @@ void packet_dispatcher::dispatch_packet(const conn::packet &packet) {
 void packet_dispatcher::handle_handshake(const conn::packet &packet) {
     std::cout << "Handling handshake packet" << std::endl;
 
-    if (packet.packetID.val != conn::StatusPacketType::HANDSHAKE) {
+    if (packet.packetID.val != 0x00) {
         std::cout << "Invalid packet ID" << std::endl;
         return;
     }
@@ -56,7 +61,8 @@ void packet_dispatcher::handle_status(const conn::packet &packet) {
 
             // Send status response packet
             StatusResponsePacket response_packet{};
-            std::string json_data = "{\"version\": {\"name\": \"1.16.5\", \"protocol\": 754}, \"players\": {\"max\": 100, \"online\": 50}, \"description\": {\"text\": \"beanz\"}}";
+            std::string json_data = "{\"version\": {\"name\": \"1.16.5\", \"protocol\": 754}, \"players\": {\"max\": "
+                                    "100, \"online\": 50}, \"description\": {\"text\": \"beanz\"}}";
 
             // Set JSON data
             response_packet.json_response = string_gen(json_data);
@@ -76,7 +82,7 @@ void packet_dispatcher::handle_status(const conn::packet &packet) {
             auto ping_packet = read_packet_data<PingPacket>(packet);
 
             // Send pong packet
-            StatusPongResponsePacket pong_packet{ ping_packet.payload };
+            StatusPongResponsePacket pong_packet{ping_packet.payload};
 
             // Serialize packet
             conn::packet p = write_packet_data(pong_packet, 0x01);
@@ -84,10 +90,43 @@ void packet_dispatcher::handle_status(const conn::packet &packet) {
             // Send packet
             connection.write_packet(p);
 
+            // Cleanup packet
+            delete[] p.data;
+
             std::cout << "Written pong packet!\n";
         } break;
         default:
             std::cout << "Unknown packet ID" << std::endl;
             break;
+    }
+}
+
+void packet_dispatcher::handle_login(const conn::packet &packet) {
+    switch(packet.packetID.val) {
+        case 0x00: {
+            std::cout << "Received login start packet\n";
+
+            // Deserialize packet
+            auto login_start_packet = read_packet_data<ClientLoginStartPacket>(packet);
+            conn::print_string(login_start_packet.name);
+
+            // Send login success packet
+            // ServerLoginSuccessPacket success_packet{{892013, 2183091829}, login_start_packet.name};
+            //
+            // conn::packet p = write_packet_data(success_packet, 0x02);
+
+            // Send login disconnect packet
+            ServerDisconnectPacket disconnect_packet{ string_gen("benz") };
+
+            conn::packet p = write_packet_data(disconnect_packet, 0x00);
+
+            // Send packet
+            connection.write_packet(p);
+
+            delete[] p.data;
+
+            // Switch to play state
+            state = conn::ConnectionState::PLAY;
+        } break;
     }
 }

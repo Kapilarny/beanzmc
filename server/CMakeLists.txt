@@ -14,6 +14,8 @@ add_library(beanzmc
         src/network/packets/packet_dispatcher.h
         src/network/packets/server/server_status_packets.h
         src/network/packets/packet_serializer.cpp
+        src/network/packets/client/client_login_packets.h
+        src/network/packets/server/server_login_packets.h
 )
 
 # -Wshift-count-overflow
