@@ -29,6 +29,12 @@ inline void write_data_typed(u8* data, u32& offset, T value) {
 }
 
 template<>
+inline void write_data_typed(u8* data, u32& offset, conn::uuid value) {
+    write_data_typed(data, offset, value.most);
+    write_data_typed(data, offset, value.least);
+}
+
+template<>
 inline void write_data_typed(u8* data, u32& offset, conn::var_int value) {
     while(true) {
         if((value.val & ~SEGMENT_BITS) == 0) {
@@ -157,6 +163,7 @@ template<typename T>
 inline u64 get_packet_size(T& packet) {
     u64 size = 0;
     reflect::for_each([&](auto I) {
+        std::cout << "Size of field: " << get_field_size(reflect::get<I>(packet)) << "\n";
         size += get_field_size(reflect::get<I>(packet));
     }, packet);
 
@@ -183,14 +190,17 @@ inline conn::packet write_packet_data(T packet, i32 packetID) {
     result.packetID.val = packetID;
 
     // i am literally such a clueless dumbass
-    result.data = new u8[get_packet_size(packet)]; // TODO: Make sure this memory is freed
+    auto packet_size = get_packet_size(packet);
+    result.data = new u8[packet_size]; // TODO: Make sure this memory is freed
 
     u32 offset = 0;
     reflect::for_each([&](auto I) {
         write_data_typed(result.data, offset, reflect::get<I>(packet));
     }, packet);
 
-    result.length.val = (i32) offset + get_varint_size(result.packetID.val);
+    result.length.val = static_cast<i32>(offset + get_varint_size(result.packetID.val));
+
+    std::cout << "Created packet with size: " << std::dec <<  result.length.val << "\n";
 
     return result;
 }

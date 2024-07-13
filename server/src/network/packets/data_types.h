@@ -47,8 +47,8 @@ namespace conn
     typedef i8 angle;
 
     typedef struct uuid {
-        i64 most;
         i64 least;
+        i64 most;
     } UUID;
 
     // Packets

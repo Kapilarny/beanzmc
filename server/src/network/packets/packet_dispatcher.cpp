@@ -13,6 +13,9 @@
 #include "server/server_login_packets.h"
 #include "server/server_status_packets.h"
 
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/random_generator.hpp>
+
 packet_dispatcher::packet_dispatcher(tcp_connection &connection) : connection(connection) {}
 
 void packet_dispatcher::dispatch_packet(const conn::packet &packet) {
@@ -110,15 +113,24 @@ void packet_dispatcher::handle_login(const conn::packet &packet) {
             auto login_start_packet = read_packet_data<ClientLoginStartPacket>(packet);
             conn::print_string(login_start_packet.name);
 
+            std::string str = "lmao";
+
             // Send login success packet
-            // ServerLoginSuccessPacket success_packet{{892013, 2183091829}, login_start_packet.name};
-            //
-            // conn::packet p = write_packet_data(success_packet, 0x02);
+            // auto uuid = boost::uuids::random_generator()();
+
+            i8 least[8] = {25, 2, -56, -121, -1, -67, -70, -29};
+            i8 most[8] = {71, -108, -81, 62, -94, 10, 99, -124};
+
+            auto uuid = conn::uuid{.least = *((i64*)least), .most = *((i64*)most)};
+
+            ServerLoginSuccessPacket success_packet = {uuid, string_gen("Kapilarny")};
+
+            conn::packet p = write_packet_data(success_packet, 0x02);
 
             // Send login disconnect packet
-            ServerDisconnectPacket disconnect_packet{ string_gen("benz") };
-
-            conn::packet p = write_packet_data(disconnect_packet, 0x00);
+            // ServerDisconnectPacket disconnect_packet{ string_gen("benz") };
+            //
+            // conn::packet p = write_packet_data(disconnect_packet, 0x00);
 
             // Send packet
             connection.write_packet(p);

@@ -67,11 +67,11 @@ TEST(packet_handler_tests, write_handshake_packet) {
         .next_state = {1}
     };
 
-    conn::packet p = write_packet_data<HandshakePacket>(test_packet, conn::HANDSHAKE);
+    conn::packet p = write_packet_data<HandshakePacket>(test_packet, 0x00);
 
     std::vector<u8> test_packet_data = {0x80, 0x01, 0x09, 0x6c, 0x6f, 0x63, 0x61, 0x6c, 0x68, 0x6f, 0x73, 0x74, 0x1F, 0x90, 0x01};
 
-    EXPECT_EQ(p.packetID.val, conn::HANDSHAKE);
+    EXPECT_EQ(p.packetID.val, 0x00);
     EXPECT_EQ(p.length.val, test_packet_data.size());
     EXPECT_EQ(memcmp(p.data, test_packet_data.data(), test_packet_data.size()), 0);
 }
