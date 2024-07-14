@@ -5,6 +5,9 @@
 #ifndef PACKET_DISPATCHER_H
 #define PACKET_DISPATCHER_H
 
+#include <boost/uuid/random_generator.hpp>
+
+
 #include "data_types.h"
 
 class tcp_connection;
@@ -21,6 +24,7 @@ private:
 
     tcp_connection& connection;
     conn::ConnectionState state = conn::ConnectionState::HANDSHAKE;
+    boost::uuids::random_generator uuid_generator = boost::uuids::random_generator();
 };
 
 

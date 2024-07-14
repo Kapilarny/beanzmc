@@ -13,8 +13,10 @@
 #include "server/server_login_packets.h"
 #include "server/server_status_packets.h"
 
-#include <boost/uuid/uuid.hpp>
 #include <boost/uuid/random_generator.hpp>
+#include <boost/uuid/uuid.hpp>
+
+#include "server/server_play_packets.h"
 
 packet_dispatcher::packet_dispatcher(tcp_connection &connection) : connection(connection) {}
 
@@ -116,21 +118,14 @@ void packet_dispatcher::handle_login(const conn::packet &packet) {
             std::string str = "lmao";
 
             // Send login success packet
-            // auto uuid = boost::uuids::random_generator()();
+            auto uuid_generated = uuid_generator();
 
-            i8 least[8] = {25, 2, -56, -121, -1, -67, -70, -29};
-            i8 most[8] = {71, -108, -81, 62, -94, 10, 99, -124};
-
-            auto uuid = conn::uuid{.least = *((i64*)least), .most = *((i64*)most)};
+            conn::uuid uuid{};
+            memcpy(&uuid, uuid_generated.data, sizeof(conn::uuid));
 
             ServerLoginSuccessPacket success_packet = {uuid, string_gen("Kapilarny")};
 
             conn::packet p = write_packet_data(success_packet, 0x02);
-
-            // Send login disconnect packet
-            // ServerDisconnectPacket disconnect_packet{ string_gen("benz") };
-            //
-            // conn::packet p = write_packet_data(disconnect_packet, 0x00);
 
             // Send packet
             connection.write_packet(p);
@@ -139,6 +134,36 @@ void packet_dispatcher::handle_login(const conn::packet &packet) {
 
             // Switch to play state
             state = conn::ConnectionState::PLAY;
+
+            // // Send Player Info packet
+            // PlayerInfoPacket_AddPlayer player_info_packet = {
+            //     .action = 0x00,
+            //     .elements = {
+            //         .length = 1,
+            //         .data = {
+            //             new PlayerInfoPacket_AddPlayer::AddPlayerElement{
+            //                 .uuid = uuid,
+            //                 .name = string_gen("Kapilarny"),
+            //                 .properties = {
+            //                     .length = 0,
+            //                     .data = nullptr
+            //                 },
+            //                 .gamemode = 1,
+            //                 .ping = 30,
+            //                 .display_name = {true, string_gen("Kapilarny")}
+            //             }
+            //         }
+            //     }
+            // };
+            //
+            // p = write_packet_data(player_info_packet, 0x32);
+
+
+
+            // Send packet
+            connection.write_packet(p);
+
+            delete[] p.data;
         } break;
     }
 }

@@ -13,6 +13,8 @@
 #include "data_types.h"
 #include "defines.h"
 
+// TODO: Cleanup this file and make it more readable
+
 conn::string string_gen(std::string str);
 std::vector<u8> var_int_gen_arr(i32 val);
 
@@ -65,6 +67,26 @@ inline void write_data_typed(u8* data, u32& offset, conn::string value) {
     write_data_typed(data, offset, value.length);
     memcpy(data + offset, value.data, value.length.val);
     offset += value.length.val;
+}
+
+template<>
+inline void write_data_typed(u8* data, u32& offset, conn::optional_string value) {
+    write_data_typed(data, offset, value.present);
+    if (value.present) {
+        write_data_typed(data, offset, value.value);
+    }
+}
+
+template<typename T>
+inline void write_data_typed(u8* data, u32& offset, conn::varint_prefixed_list<T> value) {
+    write_data_typed(data, offset, value.length);
+
+    for (i32 i = 0; i < value.length.val; i++) {
+        auto& element = value.data[i];
+        reflect::for_each([&](auto I) {
+            write_data_typed(data, offset, reflect::get<I>(element));
+        }, element);
+    }
 }
 
 template<typename T>
@@ -131,6 +153,39 @@ inline void read_data_typed(const u8* data, u32& offset, u8* write_to, conn::str
     offset += length.val;
 }
 
+template<>
+inline void read_data_typed(const u8* data, u32& offset, u8* write_to, conn::optional_string type) {
+    conn::optional_string value{};
+
+    bool present;
+    read_data_typed(data, offset, (u8*)&present, present);
+
+    value.present = present;
+
+    if (value.present) {
+        conn::string str{};
+        read_data_typed(data, offset, (u8*)&str, str);
+        value.value = str;
+    }
+
+    memcpy(write_to, &value, sizeof(conn::optional_string));
+}
+
+template<typename T>
+inline void read_data_typed(const u8* data, u32& offset, u8* write_to, conn::varint_prefixed_list<T> type) {
+    conn::var_int length{0};
+    read_data_typed(data, offset, (u8*)&length, length);
+
+    type.length = length;
+    type.data = new T[length.val];
+
+    for (i32 i = 0; i < length.val; i++) {
+        read_data_typed(data, offset, (u8*)&type.data[i], type.data[i]);
+    }
+
+    memcpy(write_to, &type, sizeof(conn::varint_prefixed_list<T>));
+}
+
 template<typename T>
 inline T read_packet_data(conn::packet packet) {
     T result{};
@@ -150,13 +205,31 @@ inline T read_packet_data(conn::packet packet) {
 }
 
 template<typename T>
-u64 get_field_size(T& field) {
+constexpr inline u64 get_field_size(T& field) {
     return sizeof(T);
+}
+
+template<typename T>
+constexpr inline u64 get_field_size(conn::varint_prefixed_list<T>& field) {
+    u64 size = 0;
+    for (i32 i = 0; i < field.length.val; i++) {
+        auto& element = field.data[i];
+        reflect::for_each([&](auto I) {
+            size += get_field_size(reflect::get<I>(element));
+        }, element);
+    }
+
+    return size + get_field_size(field.length);
 }
 
 template<>
 inline u64 get_field_size(conn::string& field) {
     return field.length.val + sizeof(conn::var_int);
+}
+
+template<>
+inline u64 get_field_size(conn::optional_string& field) {
+    return field.present ? get_field_size(field.value) + sizeof(bool) : sizeof(bool);
 }
 
 template<typename T>

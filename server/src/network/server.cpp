@@ -14,7 +14,7 @@ void tcp_connection::start() {
 
     try {
         // Read data
-        while (socket_.is_open() && socket_.available() != 0) {
+        while (socket_.is_open()) {
             conn::packet p{};
 
             // Read packet length

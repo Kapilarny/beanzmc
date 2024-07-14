@@ -22,10 +22,21 @@ namespace conn
     struct var_int { i32 val{}; };
     struct var_long { i64 val{}; };
 
+    template<typename T>
+    struct varint_prefixed_list {
+        var_int length;
+        T* data{};
+    };
+
     typedef struct string {
         var_int length;
         char* data{};
     } string;
+
+    struct optional_string {
+        bool present = false;
+        string value;
+    };
 
     inline void print_string(const string& str) {
         for(int i = 0; i < str.length.val; i++) {
@@ -47,8 +58,8 @@ namespace conn
     typedef i8 angle;
 
     typedef struct uuid {
-        i64 least;
         i64 most;
+        i64 least;
     } UUID;
 
     // Packets
