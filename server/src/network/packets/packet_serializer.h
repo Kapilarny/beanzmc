@@ -12,6 +12,7 @@
 
 #include "data_types.h"
 #include "defines.h"
+#include "util/mem_util.h"
 
 // TODO: Cleanup this file and make it more readable
 
@@ -23,9 +24,7 @@ inline void write_data_typed(u8* data, u32& offset, T value) {
     // memcpy(data + offset, &value, sizeof(T));
 
     // Swap endianness
-    for (u32 i = 0; i < sizeof(T); i++) {
-        data[offset + sizeof(T) - i - 1] = *((u8*)&value + i);
-    }
+    rev_memcpy(data + offset, (u8*)&value, sizeof(T));
 
     offset += sizeof(T);
 }
@@ -94,9 +93,7 @@ inline void read_data_typed(const u8* data, u32& offset, u8* write_to, T type) {
     // memcpy(write_to, data + offset, sizeof(T));
 
     // Swap endianness
-    for (u32 i = 0; i < sizeof(T); i++) {
-        write_to[i] = data[offset + sizeof(T) - i - 1];
-    }
+    rev_memcpy(write_to, data + offset, sizeof(T));
 
     offset += sizeof(T);
 }
