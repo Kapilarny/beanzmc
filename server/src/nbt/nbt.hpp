@@ -24,6 +24,7 @@
 #endif
 
 #include <bit>
+#include <boost/core/bit.hpp>
 #include <concepts>
 #include <cstdint>
 #include <iostream>

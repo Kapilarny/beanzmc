@@ -27,6 +27,7 @@ public:
     tcp::socket &socket() { return socket_; }
 
     void write_packet(conn::packet packet);
+    void write_raw_data(std::vector<u8>& data);
 
     i32 read_varint_from_socket();
     void start();

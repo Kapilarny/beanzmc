@@ -9,16 +9,21 @@
 // TODO: make conn::string && any allocated variables for deserialization/serialization **not** leak memory :)
 
 #include "server.h"
+#include "util/data_helper.h"
 
 mc_state_handler::mc_state_handler(tcp_connection* connection) : connection(connection) {}
 
 void mc_state_handler::handle_connection_start() {
     // Send `Join Game` packet
+    std::vector<u8> jgPacket = packet_from_file("join_game_packet.txt");
+    conn::packet packet = { {0x24}, {(i32)jgPacket.size() + get_varint_size(0x24)}, jgPacket.data() };
+
+    connection->write_packet(packet);
 
     // Send `Plugin Message` packet with `minecraft:brand` channel and server brand
     ServerPluginMessagePacket plugin_message_packet = { .channel = string_gen("minecraft:brand"), .data = {.length = 5, .data = (u8*)"beanz"} };
 
-    conn::packet packet = write_packet_data(plugin_message_packet, 0x17);
+    packet = write_packet_data(plugin_message_packet, 0x17);
     connection->write_packet(packet);
 
     delete[] packet.data;

@@ -26,6 +26,7 @@ add_library(beanzmc
         src/network/mc_state_handler.cpp
         src/network/mc_state_handler.h
         src/mc/mc_entities.h
+        src/util/data_helper.h
 )
 
 # -Wshift-count-overflow

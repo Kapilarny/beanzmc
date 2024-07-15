@@ -87,19 +87,23 @@ void tcp_connection::write_packet(conn::packet packet) {
     // Print packet data
     std::cout << "PACKET DISPATCHED! (" << packet.length.val << ", " << packet.packetID.val << ")\n\n";
 
-    for(int i = 0; i < length.size(); i++) {
-        std::cout << std::hex << (int)length[i] << " ";
+    for (int i = 0; i < length.size(); i++) {
+        std::cout << std::hex << (int) length[i] << " ";
     }
 
-    for(int i = 0; i < packet_id.size(); i++) {
-        std::cout << std::hex << (int)packet_id[i] << " ";
+    for (int i = 0; i < packet_id.size(); i++) {
+        std::cout << std::hex << (int) packet_id[i] << " ";
     }
 
-    for(int i = 0; i < packet.length.val - packet_id.size(); i++) {
-        std::cout << std::hex << (int)packet.data[i] << " ";
+    for (int i = 0; i < packet.length.val - packet_id.size(); i++) {
+        std::cout << std::hex << (int) packet.data[i] << " ";
     }
 
     std::cout << "\n\n\n";
+}
+
+void tcp_connection::write_raw_data(std::vector<u8> &data) {
+    boost::asio::write(socket_, boost::asio::buffer(data));
 }
 
 i32 tcp_connection::read_varint_from_socket() {

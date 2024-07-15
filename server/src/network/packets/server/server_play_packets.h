@@ -31,13 +31,146 @@ struct PlayerInfoPacket_AddPlayer {
     conn::varint_prefixed_list<AddPlayerElement> elements;
 };
 
+inline nbt::NBT generate_dimension_codec() {
+    // nbt::NBT dimension_type
+    // {
+    //     "minecraft:dimension_type", nbt::TagCompound {
+    //         {"type", "minecraft:dimension_type"},
+    //         {"value", std::vector<nbt::TagCompound> {
+    //             {
+    //                 {"name", "minecraft:overworld"},
+    //                 {"id", 0},
+    //                 {"element", nbt::TagCompound {
+    //                     {"piglin_safe", 0},
+    //                     {"natural", 1},
+    //                     {"ambient_light", 0.0f},
+    //                     {"infiniburn", "minecraft:infiniburn_overworld"},
+    //                     {"respawn_anchor_works", 0},
+    //                     {"has_skylight", 1},
+    //                     {"bed_works", 1},
+    //                     {"effects", "minecraft:overworld"},
+    //                     {"has_raids", 1},
+    //                     {"logical_height", 256},
+    //                     {"coordinate_scale", 1.0f},
+    //                     {"ultrawarm", 0},
+    //                     {"has_ceiling", 0}
+    //                 }},
+    //             }
+    //         }}
+    //     }
+    // };
+    //
+    // nbt::NBT biomes = {
+    //     "minecraft:worldgen/biome", nbt::TagCompound {
+    //         {"type", "minecraft:worldgen/biome"},
+    //         {"value", std::vector<nbt::TagCompound> {{
+    //             {"name", "minecraft:the_void"},
+    //             {"id", 127},
+    //             {"element", nbt::TagCompound {
+    //                 {"precipitation", "none"},
+    //                 {"effects", nbt::TagCompound {
+    //                     {"sky_color", 8103167},
+    //                     {"water_fog_color", 329011},
+    //                     {"fog_color", 12638463},
+    //                     {"water_color", 4159204},
+    //                     {"mood_sound", nbt::TagCompound {
+    //                         {"tick_delay", 6000},
+    //                         {"offset", 2.0f},
+    //                         {"sound", "minecraft:ambient.cave"},
+    //                         {"block_search_extent", 8}
+    //                     }},
+    //                     }}
+    //                 }},
+    //                 {"depth", 0.1f},
+    //                 {"temperature", 0.5f},
+    //                 {"scale", 0.2f},
+    //             {"downfall", 0.5f},
+    //             {"category", "ocean"},
+    //             {"temperature_modifier", "frozen"}
+    //         }},
+    //         }
+    //     }
+    // };
+
+    nbt::NBT result = {
+        nbt::TagCompound {
+                {
+                    "minecraft:worldgen/biome", nbt::TagCompound {
+                        {"type", "minecraft:worldgen/biome"},
+                        {"value", std::vector<nbt::TagCompound> {{
+                            {"name", "minecraft:the_void"},
+                            {"id", 127},
+                            {"element", nbt::TagCompound {
+                                {"precipitation", "none"},
+                                {"effects", nbt::TagCompound {
+                                    {"sky_color", 8103167},
+                                    {"water_fog_color", 329011},
+                                    {"fog_color", 12638463},
+                                    {"water_color", 4159204},
+                                    {"mood_sound", nbt::TagCompound {
+                                        {"tick_delay", 6000},
+                                        {"offset", 2.0f},
+                                        {"sound", "minecraft:ambient.cave"},
+                                        {"block_search_extent", 8}
+                                    }},
+                                    }}
+                            }},
+                            {"depth", 0.1f},
+                            {"temperature", 0.5f},
+                            {"scale", 0.2f},
+                        {"downfall", 0.5f},
+                        {"category", "ocean"},
+                        {"temperature_modifier", "frozen"}
+                        }},
+                        }
+                    }
+                },
+                {
+                    "minecraft:dimension_type", nbt::TagCompound {
+                    {"type", "minecraft:dimension_type"},
+                    {"value", std::vector<nbt::TagCompound> {
+                        {
+                            {"name", "minecraft:overworld"},
+                            {"id", 0},
+                            {"element", nbt::TagCompound {
+                                {"piglin_safe", 0},
+                                {"natural", 1},
+                                {"ambient_light", 0.0f},
+                                {"infiniburn", "minecraft:infiniburn_overworld"},
+                                {"respawn_anchor_works", 0},
+                                {"has_skylight", 1},
+                                {"bed_works", 1},
+                                {"effects", "minecraft:overworld"},
+                                {"has_raids", 1},
+                                {"logical_height", 256},
+                                {"coordinate_scale", 1.0f},
+                                {"ultrawarm", 0},
+                                {"has_ceiling", 0}
+                            }},
+                        }
+                    }}
+                    }
+                }
+        }
+    };
+
+    return result;
+}
+
+inline nbt::NBT generate_dimension_nbt() {
+    nbt::NBT result = {
+
+    };
+    return result;
+}
+
 struct ServerJoinGamePacket {
     i32 entity_id{};
     bool is_hardcore{};
     u8 gamemode{}; // 0 - survival, 1 - creative, 2 - adventure, 3 - spectator
     i8 previous_gamemode{}; // -1 if no previous gamemode
     conn::varint_prefixed_list<conn::identifier> world_names;
-    nbt::NBT dimension_codec = {};
+    nbt::NBT dimension_codec = generate_dimension_codec();
 };
 
 struct ServerPlayerPositionAndLookPacket {
