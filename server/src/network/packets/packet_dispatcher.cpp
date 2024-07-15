@@ -17,8 +17,9 @@
 #include <boost/uuid/uuid.hpp>
 
 #include "server/server_play_packets.h"
+#include "network/mc_state_handler.h"
 
-packet_dispatcher::packet_dispatcher(tcp_connection &connection) : connection(connection) {}
+packet_dispatcher::packet_dispatcher(tcp_connection &connection) : connection(connection), state_handler(&connection) {}
 
 void packet_dispatcher::dispatch_packet(const conn::packet &packet) {
     std::cout << "Dispatching packet with ID: " << packet.packetID.val << std::endl;
@@ -116,9 +117,7 @@ void packet_dispatcher::handle_login(const conn::packet &packet) {
 
             // Deserialize packet
             auto login_start_packet = read_packet_data<ClientLoginStartPacket>(packet);
-            conn::print_string(login_start_packet.name);
-
-            std::string str = "lmao";
+            print_string(login_start_packet.name);
 
             // Send login success packet
             auto uuid_generated = uuid_generator();
@@ -138,46 +137,7 @@ void packet_dispatcher::handle_login(const conn::packet &packet) {
             // Switch to play state
             state = conn::ConnectionState::PLAY;
 
-            // // Send Player Info packet
-            // PlayerInfoPacket_AddPlayer player_info_packet = {
-            //     .action = 0x00,
-            //     .elements = {
-            //         .length = 1,
-            //         .data = {
-            //             new PlayerInfoPacket_AddPlayer::AddPlayerElement{
-            //                 .uuid = uuid,
-            //                 .name = string_gen("Kapilarny"),
-            //                 .properties = {
-            //                     .length = 0,
-            //                     .data = nullptr
-            //                 },
-            //                 .gamemode = 1,
-            //                 .ping = 30,
-            //                 .display_name = {true, string_gen("Kapilarny")}
-            //             }
-            //         }
-            //     }
-            // };
-            //
-            // p = write_packet_data(player_info_packet, 0x32);
-
-            // Send PlayerPositionAndLook packet
-            ServerPlayerPositionAndLookPacket position_packet = {
-                .x = 0,
-                .y = 100,
-                .z = 0,
-                .yaw = 0,
-                .pitch = 0,
-                .flags = {},
-                .teleport_id = 0
-            };
-
-            p = write_packet_data(position_packet, 0x34);
-
-            // Send packet
-            connection.write_packet(p);
-
-            delete[] p.data;
+            state_handler.handle_connection_start();
         } break;
     }
 }

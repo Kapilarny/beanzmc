@@ -5,8 +5,12 @@
 #ifndef SERVER_PLAY_PACKETS_H
 #define SERVER_PLAY_PACKETS_H
 
-#include "network/packets/packet_serializer.h"
+#include "mc/mc_entities.h"
+#include "nbt/nbt.hpp"
 #include "network/packets/data_types.h"
+#include "network/packets/packet_serializer.h"
+
+// TODO: use namespaces bruv
 
 struct PlayerInfoPacket_AddPlayer {
     conn::var_int action;
@@ -33,7 +37,7 @@ struct ServerJoinGamePacket {
     u8 gamemode{}; // 0 - survival, 1 - creative, 2 - adventure, 3 - spectator
     i8 previous_gamemode{}; // -1 if no previous gamemode
     conn::varint_prefixed_list<conn::identifier> world_names;
-    // TODO: finish
+    nbt::NBT dimension_codec = {};
 };
 
 struct ServerPlayerPositionAndLookPacket {
@@ -57,6 +61,37 @@ struct ServerTimeUpdatePacket {
 
 struct ServerKeepAlivePacket {
     i64 id{};
+};
+
+struct ServerPluginMessagePacket {
+    conn::string channel;
+    conn::len_derived_byte_array data;
+};
+
+struct ServerEntityStatusPacket {
+    i32 entity_id{};
+    mc::EntityStatus status{};
+};
+
+struct ServerDifficultyPacket {
+    u8 difficulty{}; // 0 - peaceful, 1 - easy, 2 - normal, 3 - hard
+    bool locked{};
+};
+
+struct ServerPlayerAbilitiesPacket {
+    struct Flags {
+        bool invulnerable: 1;
+        bool flying: 1;
+        bool allow_flying: 1;
+        bool creative_mode: 1;
+        // 4 bits unused
+    } flags{};
+    f32 flying_speed = 0.05f;
+    f32 field_of_view_modifier = 0.1f;
+};
+
+struct ServerHeldItemChangePacket {
+    u8 slot{}; // 0 - 8
 };
 
 #endif //SERVER_PLAY_PACKETS_H

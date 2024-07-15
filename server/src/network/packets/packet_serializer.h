@@ -88,6 +88,19 @@ inline void write_data_typed(u8* data, u32& offset, conn::varint_prefixed_list<T
     }
 }
 
+template<>
+inline void write_data_typed(u8* data, u32& offset, conn::var_int_prefixed_byte_array value) {
+    write_data_typed(data, offset, value.length);
+    memcpy(data + offset, value.data, value.length.val);
+    offset += value.length.val;
+}
+
+template<>
+inline void write_data_typed(u8* data, u32& offset, conn::len_derived_byte_array value) {
+    memcpy(data + offset, value.data, value.length);
+    offset += value.length;
+}
+
 template<typename T>
 inline void read_data_typed(const u8* data, u32& offset, u8* write_to, T type) {
     // memcpy(write_to, data + offset, sizeof(T));
@@ -166,6 +179,28 @@ inline void read_data_typed(const u8* data, u32& offset, u8* write_to, conn::opt
     }
 
     memcpy(write_to, &value, sizeof(conn::optional_string));
+}
+
+template<>
+inline void read_data_typed(const u8* data, u32& offset, u8* write_to, conn::uuid type) {
+    conn::uuid value{};
+    read_data_typed(data, offset, (u8*)&value.most, value.most);
+    read_data_typed(data, offset, (u8*)&value.least, value.least);
+
+    memcpy(write_to, &value, sizeof(conn::uuid));
+}
+
+template<>
+inline void read_data_typed(const u8* data, u32& offset, u8* write_to, conn::var_int_prefixed_byte_array type) {
+    conn::var_int length{0};
+    read_data_typed(data, offset, (u8*)&length, length);
+
+    type.length = length;
+    type.data = new u8[length.val];
+    memcpy(type.data, data + offset, length.val);
+
+    memcpy(write_to, &type, sizeof(conn::var_int_prefixed_byte_array));
+    offset += length.val;
 }
 
 template<typename T>

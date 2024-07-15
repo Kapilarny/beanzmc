@@ -23,6 +23,9 @@ add_library(beanzmc
         src/network/packets/handlers/play_packet_handler.cpp
         src/network/packets/handlers/impl/client_keep_alive.h
         src/nbt/nbt.hpp
+        src/network/mc_state_handler.cpp
+        src/network/mc_state_handler.h
+        src/mc/mc_entities.h
 )
 
 # -Wshift-count-overflow

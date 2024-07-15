@@ -55,6 +55,17 @@ namespace conn
         i32 z;
     } position;
 
+    struct var_int_prefixed_byte_array {
+        var_int length;
+        u8* data{};
+    };
+
+    // TODO: WARNING: Reading this type is not implemented yet! only write works
+    struct len_derived_byte_array {
+        u32 length{};
+        u8* data{};
+    };
+
     typedef i8 angle;
 
     typedef struct uuid {
