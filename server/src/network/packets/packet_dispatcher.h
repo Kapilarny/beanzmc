@@ -9,6 +9,7 @@
 
 
 #include "data_types.h"
+#include "handlers/play_packet_handler.h"
 
 class tcp_connection;
 
@@ -23,6 +24,7 @@ private:
     void handle_login(const conn::packet& packet);
 
     tcp_connection& connection;
+    play_packet_handler play_packet_handler{};
     conn::ConnectionState state = conn::ConnectionState::HANDSHAKE;
     boost::uuids::random_generator uuid_generator = boost::uuids::random_generator();
 };

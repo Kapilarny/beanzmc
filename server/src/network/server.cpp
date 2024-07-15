@@ -8,34 +8,60 @@
 
 #include "packets/data_types.h"
 #include "packets/packet_serializer.h"
+#include "packets/server/server_play_packets.h"
+
+#include "nbt/nbt.hpp"
 
 void tcp_connection::start() {
     std::cout << "New connection created!\n";
 
+    u64 last_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    u64 last_keep_alive = last_time;
+
     try {
         // Read data
         while (socket_.is_open()) {
-            conn::packet p{};
+            if(socket_.available() != 0) {
+                conn::packet p{};
 
-            // Read packet length
-            p.length.val = read_varint_from_socket();
+                // Read packet length
+                p.length.val = read_varint_from_socket();
 
-            std::cout << "Received length: " << p.length.val << "\n";
+                std::cout << "Received length: " << p.length.val << "\n";
 
-            if (p.length.val > 0) {
-                // Read packet ID
-                p.packetID.val = read_varint_from_socket();
+                if (p.length.val > 0) {
+                    // Read packet ID
+                    p.packetID.val = read_varint_from_socket();
 
-                std::cout << "Received packet ID: " << p.packetID.val << "\n";
+                    std::cout << "Received packet ID: " << p.packetID.val << "\n";
 
-                // Read packet data
-                p.data = new u8[p.length.val];
-                boost::asio::read(socket_, boost::asio::buffer(p.data, p.length.val - get_varint_size(p.packetID.val))); // TODO: make it more efficient
+                    // Read packet data
+                    p.data = new u8[p.length.val];
+                    boost::asio::read(socket_, boost::asio::buffer(p.data, p.length.val - get_varint_size(p.packetID.val))); // TODO: make it more efficient
+                }
+
+                dispatcher.dispatch_packet(p);
+
+                delete[] p.data;
+            } else {
+                u64 current_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+                if (current_time - last_keep_alive > 10000) { // Send keep alive packet every 10 seconds
+                    // Send keep alive packet
+                    ServerKeepAlivePacket keep_alive_packet = {(i64)current_time};
+                    conn::packet packet = write_packet_data(keep_alive_packet, 0x1F);
+
+                    write_packet(packet);
+
+                    delete[] packet.data;
+
+                    last_keep_alive = current_time;
+                }
+
+                last_time = current_time;
+
+                // Sleep for 1ms
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
             }
-
-            dispatcher.dispatch_packet(p);
-
-            delete[] p.data;
         }
     } catch (boost::system::system_error &e) {
         std::cout << e.what() << std::endl;

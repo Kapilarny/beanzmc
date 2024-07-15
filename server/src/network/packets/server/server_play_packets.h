@@ -33,7 +33,30 @@ struct ServerJoinGamePacket {
     u8 gamemode{}; // 0 - survival, 1 - creative, 2 - adventure, 3 - spectator
     i8 previous_gamemode{}; // -1 if no previous gamemode
     conn::varint_prefixed_list<conn::identifier> world_names;
+    // TODO: finish
+};
 
+struct ServerPlayerPositionAndLookPacket {
+    f64 x{}, y{}, z{};
+    f32 yaw{}, pitch{};
+    struct Flags {
+        bool x: 1;
+        bool y: 1;
+        bool z: 1;
+        bool y_rot: 1;
+        bool x_rot: 1;
+        // 3 bits unused
+    } flags{};
+    conn::var_int teleport_id{};
+};
+
+struct ServerTimeUpdatePacket {
+    i64 world_age{};
+    i64 time_of_day{};
+};
+
+struct ServerKeepAlivePacket {
+    i64 id{};
 };
 
 #endif //SERVER_PLAY_PACKETS_H

@@ -34,6 +34,9 @@ void packet_dispatcher::dispatch_packet(const conn::packet &packet) {
         case conn::ConnectionState::LOGIN:
             handle_login(packet);
             break;
+        case conn::ConnectionState::PLAY:
+            play_packet_handler.handle_packet(packet);
+            break;
         default:
             std::cout << "Unknown connection state" << std::endl;
             break;
@@ -158,7 +161,18 @@ void packet_dispatcher::handle_login(const conn::packet &packet) {
             //
             // p = write_packet_data(player_info_packet, 0x32);
 
+            // Send PlayerPositionAndLook packet
+            ServerPlayerPositionAndLookPacket position_packet = {
+                .x = 0,
+                .y = 100,
+                .z = 0,
+                .yaw = 0,
+                .pitch = 0,
+                .flags = {},
+                .teleport_id = 0
+            };
 
+            p = write_packet_data(position_packet, 0x34);
 
             // Send packet
             connection.write_packet(p);

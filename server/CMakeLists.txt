@@ -17,9 +17,12 @@ add_library(beanzmc
         src/network/packets/client/client_login_packets.h
         src/network/packets/server/server_login_packets.h
         src/network/packets/server/server_play_packets.h
-        src/nbt/nbt.h
-        src/nbt/nbt.cpp
         src/util/mem_util.h
+        src/network/packets/client/client_play_packets.h
+        src/network/packets/handlers/play_packet_handler.h
+        src/network/packets/handlers/play_packet_handler.cpp
+        src/network/packets/handlers/impl/client_keep_alive.h
+        src/nbt/nbt.hpp
 )
 
 # -Wshift-count-overflow

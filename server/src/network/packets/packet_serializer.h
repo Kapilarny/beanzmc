@@ -233,7 +233,7 @@ template<typename T>
 inline u64 get_packet_size(T& packet) {
     u64 size = 0;
     reflect::for_each([&](auto I) {
-        std::cout << "Size of field: " << get_field_size(reflect::get<I>(packet)) << "\n";
+        // std::cout << "Size of field: " << get_field_size(reflect::get<I>(packet)) << "\n";
         size += get_field_size(reflect::get<I>(packet));
     }, packet);
 
