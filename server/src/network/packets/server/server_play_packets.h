@@ -159,7 +159,27 @@ inline nbt::NBT generate_dimension_codec() {
 
 inline nbt::NBT generate_dimension_nbt() {
     nbt::NBT result = {
-
+        nbt::TagCompound {
+                {
+                    {"name", "minecraft:overworld"},
+                    {"id", 0},
+                    {"element", nbt::TagCompound {
+                                    {"piglin_safe", 0},
+                                    {"natural", 1},
+                                    {"ambient_light", 0.0f},
+                                    {"infiniburn", "minecraft:infiniburn_overworld"},
+                                    {"respawn_anchor_works", 0},
+                                    {"has_skylight", 1},
+                                    {"bed_works", 1},
+                                    {"effects", "minecraft:overworld"},
+                                    {"has_raids", 1},
+                                    {"logical_height", 256},
+                                    {"coordinate_scale", 1.0f},
+                                    {"ultrawarm", 0},
+                                    {"has_ceiling", 0}
+                    }},
+                }
+        }
     };
     return result;
 }
@@ -169,8 +189,17 @@ struct ServerJoinGamePacket {
     bool is_hardcore{};
     u8 gamemode{}; // 0 - survival, 1 - creative, 2 - adventure, 3 - spectator
     i8 previous_gamemode{}; // -1 if no previous gamemode
-    conn::varint_prefixed_list<conn::identifier> world_names;
-    nbt::NBT dimension_codec = generate_dimension_codec();
+    conn::varint_prefixed_list<conn::string> world_names;
+    nbt::NBT dimension_codec = {};
+    nbt::NBT dimension = {};
+    conn::string world_name;
+    i64 hashed_seed{};
+    conn::var_int max_players{}; // ignored by client
+    conn::var_int view_distance{}; // 2-32
+    bool reduced_debug_info{};
+    bool enable_respawn_screen{};
+    bool is_debug{};
+    bool is_flat{};
 };
 
 struct ServerPlayerPositionAndLookPacket {

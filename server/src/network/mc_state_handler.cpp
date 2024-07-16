@@ -15,9 +15,21 @@ mc_state_handler::mc_state_handler(tcp_connection* connection) : connection(conn
 
 void mc_state_handler::handle_connection_start() {
     // Send `Join Game` packet
-    std::vector<u8> jgPacket = packet_from_file("join_game_packet.txt");
-    conn::packet packet = { {0x24}, {(i32)jgPacket.size() + get_varint_size(0x24)}, jgPacket.data() };
+    ServerJoinGamePacket join_game_packet{};
+    join_game_packet.entity_id = 8;
+    join_game_packet.hashed_seed = 21309920;
+    join_game_packet.view_distance.val = 2;
+    std::string mc_overworld = "minecraft:overworld";
+    join_game_packet.world_name = string_gen(mc_overworld);
 
+    auto* world_names = new conn::identifier[1];
+    world_names[0] = string_gen(mc_overworld);
+
+    join_game_packet.world_names = { {1}, world_names };
+
+    conn::packet packet = write_packet_data(join_game_packet, 0x24);
+
+    std::cout << "Writing ServerJoinGamePacket" << std::endl;
     connection->write_packet(packet);
 
     // Send `Plugin Message` packet with `minecraft:brand` channel and server brand

@@ -7,20 +7,25 @@
 
 #include <stdexcept>
 #include <vector>
+#include <sstream>
 
 #include <reflect>
 
 #include "data_types.h"
 #include "defines.h"
+#include "nbt/nbt.hpp"
 #include "util/mem_util.h"
 
 // TODO: Cleanup this file and make it more readable
+
+// todo: fullon rewrite this
 
 conn::string string_gen(std::string str);
 std::vector<u8> var_int_gen_arr(i32 val);
 
 template<typename T>
-inline void write_data_typed(u8* data, u32& offset, T value) {
+inline void write_data_typed(u8* data, u32& offset, const T& value) {
+    std::cout << "write_data_typed<T> triggered\n";
     // memcpy(data + offset, &value, sizeof(T));
 
     // Swap endianness
@@ -30,46 +35,53 @@ inline void write_data_typed(u8* data, u32& offset, T value) {
 }
 
 template<>
-inline void write_data_typed(u8* data, u32& offset, conn::uuid value) {
+inline void write_data_typed(u8* data, u32& offset, const conn::uuid& value) {
+    std::cout << "write_data_typed<conn::uuid> triggered\n";
     write_data_typed(data, offset, value.most);
     write_data_typed(data, offset, value.least);
 }
 
 template<>
-inline void write_data_typed(u8* data, u32& offset, conn::var_int value) {
+inline void write_data_typed(u8* data, u32& offset, const conn::var_int& value) {
+    std::cout << "write_data_typed<conn::var_int> triggered\n";
+    i32 val = value.val;
     while(true) {
         if((value.val & ~SEGMENT_BITS) == 0) {
-            data[offset++] = value.val;
+            data[offset++] = val;
             return;
         }
 
-        data[offset++] = (value.val & SEGMENT_BITS) | CONTINUE_BIT;
-        value.val = ((u32)value.val) >> 7;
+        data[offset++] = (val & SEGMENT_BITS) | CONTINUE_BIT;
+        val = ((u32)val) >> 7;
     }
 }
 
 template<>
-inline void write_data_typed(u8* data, u32& offset, conn::var_long value) {
+inline void write_data_typed(u8* data, u32& offset, const conn::var_long& value) {
+    std::cout << "write_data_typed<conn::var_long> triggered\n";
+    i64 val = value.val;
     while(true) {
         if((value.val & ~((i64)SEGMENT_BITS)) == 0) {
-            data[offset++] = value.val;
+            data[offset++] = val;
             return;
         }
 
-        data[offset++] = (value.val & SEGMENT_BITS) | CONTINUE_BIT;
-        value.val = ((u64)value.val) >> 7;
+        data[offset++] = (val & SEGMENT_BITS) | CONTINUE_BIT;
+        val = ((u64)val) >> 7;
     }
 }
 
 template<>
-inline void write_data_typed(u8* data, u32& offset, conn::string value) {
+inline void write_data_typed(u8* data, u32& offset, const conn::string& value) {
+    std::cout << "write_data_typed<conn::string> triggered\n";
     write_data_typed(data, offset, value.length);
     memcpy(data + offset, value.data, value.length.val);
     offset += value.length.val;
 }
 
 template<>
-inline void write_data_typed(u8* data, u32& offset, conn::optional_string value) {
+inline void write_data_typed(u8* data, u32& offset, const conn::optional_string& value) {
+    std::cout << "write_data_typed<conn::optional_string> triggered\n";
     write_data_typed(data, offset, value.present);
     if (value.present) {
         write_data_typed(data, offset, value.value);
@@ -77,28 +89,53 @@ inline void write_data_typed(u8* data, u32& offset, conn::optional_string value)
 }
 
 template<typename T>
-inline void write_data_typed(u8* data, u32& offset, conn::varint_prefixed_list<T> value) {
+bool is_non_extendable_parser_type() {
+    return typeid(T) == typeid(conn::var_int) || typeid(T) == typeid(conn::var_long) || typeid(T) == typeid(conn::string) || typeid(T) == typeid(conn::optional_string) || typeid(T) == typeid(conn::uuid) || typeid(T) == typeid(conn::var_int_prefixed_byte_array);
+}
+
+template<typename T>
+inline void write_data_typed(u8* data, u32& offset, const conn::varint_prefixed_list<T>& value) {
+    std::cout << "write_data_typed<conn::varint_prefixed_list<T>> triggered\n";
     write_data_typed(data, offset, value.length);
 
     for (i32 i = 0; i < value.length.val; i++) {
-        auto& element = value.data[i];
-        reflect::for_each([&](auto I) {
-            write_data_typed(data, offset, reflect::get<I>(element));
-        }, element);
+        auto element = value.data[i];
+        if(is_non_extendable_parser_type<T>()) {
+            reflect::for_each([&](auto I) {
+                write_data_typed(data, offset, reflect::get<I>(element));
+            }, element);
+        } else {
+            write_data_typed(data, offset, element);
+        }
     }
 }
 
 template<>
-inline void write_data_typed(u8* data, u32& offset, conn::var_int_prefixed_byte_array value) {
+inline void write_data_typed(u8* data, u32& offset, const conn::var_int_prefixed_byte_array& value) {
+    std::cout << "write_data_typed<conn::var_int_prefixed_byte_array> triggered\n";
     write_data_typed(data, offset, value.length);
     memcpy(data + offset, value.data, value.length.val);
     offset += value.length.val;
 }
 
 template<>
-inline void write_data_typed(u8* data, u32& offset, conn::len_derived_byte_array value) {
+inline void write_data_typed(u8* data, u32& offset, const conn::len_derived_byte_array& value) {
+    std::cout << "write_data_typed<conn::len_derived_byte_array> triggered\n";
     memcpy(data + offset, value.data, value.length);
     offset += value.length;
+}
+
+template<>
+inline void write_data_typed(u8* data, u32& offset, const nbt::NBT& value) {
+    std::cout << "write_data_typed<nbt::NBT> triggered\n";
+    std::ostringstream stream;
+    value.encode(stream);
+
+    // copy stream to data
+    auto str = stream.str();
+
+    memcpy(data + offset, str.c_str(), str.length());
+    offset += str.length();
 }
 
 template<typename T>
@@ -239,6 +276,21 @@ inline T read_packet_data(conn::packet packet) {
 template<typename T>
 constexpr inline u64 get_field_size(T& field) {
     return sizeof(T);
+}
+
+// This is unefficient AF, TODO: Rewrite
+template<>
+inline u64 get_field_size(nbt::NBT& field) {
+    std::ostringstream stream;
+    field.encode(stream);
+
+    std::cout << "NBT size: " << stream.str().length() << "\n";
+    // print nbt bytes
+    for (u32 i = 0; i < stream.str().length(); i++) {
+        printf("%02X ", (u8)stream.str()[i]);
+    }
+
+    return stream.str().length();
 }
 
 template<typename T>

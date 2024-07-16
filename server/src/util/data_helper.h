@@ -19,7 +19,7 @@ inline std::vector<u8> packet_from_file(const std::string& path) {
     if (file.is_open()) {
         while (!file.eof()) {
             u8 byte;
-            file >> std::hex >> byte;
+            file >> byte;
             data.push_back(byte);
         }
     }
